@@ -8,8 +8,7 @@
 namespace
 {
 
-   	int FPS = 60;
-    enum MYKEYS {
+   	int FPS = 60; enum MYKEYS {
 	KEY_ESC, KEY_W, KEY_A, KEY_S, KEY_D
 	};
 
