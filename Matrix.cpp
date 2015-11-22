@@ -133,11 +133,11 @@ void Matrix::initMatrix() {
     }
 }
 
-void Matrix::rotateXY(double degrees) {
+/*void Matrix::rotateXY(double degrees) {
 }
 
 void Matrix::rotateXZ(double degrees) {
 }
 
 void Matrixx::rotateYZ(double degrees) {
-}
+}*/

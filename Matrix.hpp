@@ -9,6 +9,7 @@ class Matrix
 		Matrix();
         Matrix(unsigned int m, unsigned int n);
         Matrix(const std::vector<double>& vect);
+        Matrix(double x, double y, double z);
 		//Matrix(const Matrix& matr);
 		//~Matrix();
 		//Matrix operator=(const Matrix& matr);

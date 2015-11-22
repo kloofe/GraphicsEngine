@@ -1,60 +1,31 @@
 #include <allegro5/allegro.h> 
 #include <allegro5/allegro_primitives.h>
 #include <iostream>
-#include "Matrix.hpp"
 
 #include "Display.hpp"
+#include "Matrix.hpp"
 
 namespace
 {
-    std::vector<Matrix> points;
-    Matrix p1(-50, -50, 50);
-    Matrix p2(-50, 50, 50);
-    Matrix p3(50, 50, 50);
-    Matrix p4(50, -50, 50);
-    Matrix p5(50, -50, -50);
-    Matrix p6(50, 50, -50);
-    Matrix p7(-50, 50, -50);
-    Matrix p8(-50, -50, -50);
-    points.push_back(p1);
-    points.push_back(p2);
-    points.push_back(p3);
-    points.push_back(p4);
-    points.push_back(p5);
-    points.push_back(p6);
-    points.push_back(p7);
-    points.push_back(p8);
-
-    std::vector<Matrix> screenPoints = points;
-
-    Matrix camera(0, 0, 200);
-
-    Matrix orthogonal(4, 4);
-    Matrix scale(4, 4);
-    Matrix convert2D(4, 4);
-
 	int FPS = 60;
 	int width = 640;
 	int height = 480;
-    double n = 100;
-    double f = -200;
-    double r = width/8;
-    double l = -width/8;
-    double t = height/8;
-    double b = -height/8;
 
+	std::vector<double> initialEyeVector = {0, 0, 200};
+	std::vector<double> initialGazeVector = {0, 0, -1};
+	
 	enum MYKEYS {
 	KEY_ESC, KEY_W, KEY_A, KEY_S, KEY_D
 	};
 
 	bool key[5] = {false, false, false, false, false};
+
 }
 
 
 Display::Display()
-	: eventQueue{NULL}, timer{NULL}, display{NULL}
+	: eventQueue{NULL}, timer{NULL}, display{NULL}, eyeVector{initialEyeVector}, gazeVector{initialGazeVector}
 {
-    updateScreenPoints();
 	al_init();
 	al_init_primitives_addon();
 	eventQueue = al_create_event_queue();
@@ -64,10 +35,12 @@ Display::Display()
 	al_clear_to_color(al_map_rgb(255, 255, 255));
 
 	al_install_keyboard();
+	al_install_mouse();
 
 	al_register_event_source(eventQueue, al_get_display_event_source(display));
 	al_register_event_source(eventQueue, al_get_timer_event_source(timer));
 	al_register_event_source(eventQueue, al_get_keyboard_event_source());
+	al_register_event_source(eventQueue, al_get_mouse_event_source());
 }
 
 Display::~Display()
@@ -90,7 +63,7 @@ void Display::run()
 		bool redraw = false;
 
 		if (ev.type == ALLEGRO_EVENT_TIMER)
-			redraw = false;
+			redraw = true;
 		else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			break;
 		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
@@ -123,40 +96,44 @@ void Display::run()
 
 			redraw = true;
 		}
-    
-
-        al_clear_to_color(al_map_rgb(255, 255, 255));
-	    al_flip_display();
-
-        drawObjects();
+		else if (ev.type == ALLEGRO_EVENT_MOUSE_AXES)
+		{
+		}
 
 		if (redraw)
 		{
 			al_clear_to_color(al_map_rgb(255, 255, 255));
 			if(key[KEY_W])
-				al_draw_line(0, 0, 640, 480, al_map_rgb(0, 0, 0), 1.0);
+			{
+				eyeVector[0] += (gazeVector[0] * 0.1);
+				eyeVector[1] += (gazeVector[1] * 0.1);
+				eyeVector[2] += (gazeVector[2] * 0.1);
+			}
 			if(key[KEY_A])
-				al_draw_line(0, 480, 640, 0, al_map_rgb(0, 0, 0), 1.0);
+			{				
+				eyeVector[0] -= (1 * 0.1);
+				eyeVector[1] -= (0 * 0.1);
+				eyeVector[2] -= (0 * 0.1);
+			}
 			if(key[KEY_S])
-				al_draw_line(0, 240, 640, 240, al_map_rgb(0, 0, 0), 1.0);
+			{
+				eyeVector[0] -= (gazeVector[0] * 0.1);
+				eyeVector[1] -= (gazeVector[1] * 0.1);
+				eyeVector[2] -= (gazeVector[2] * 0.1);
+			}
 			if(key[KEY_D])
-				al_draw_line(320, 0, 320, 480, al_map_rgb(0, 0, 0), 1.0);
+			{
+				eyeVector[0] += (1 * 0.1);
+				eyeVector[1] += (0 * 0.1);
+				eyeVector[2] += (0 * 0.1);
+			}
 			al_flip_display();
 		}
-
+		std::cout << "eyeVectorX: " << eyeVector[0] << std::endl;
+		std::cout << "eyeVectorY: " << eyeVector[1] << std::endl;
+		std::cout << "eyeVectorZ: " << eyeVector[2] << std::endl;
+		std::cout << "gazeVectorX: " << gazeVector[0] << std::endl;
+		std::cout << "gazeVectorY: " << gazeVector[1] << std::endl;
+		std::cout << "gazeVectorZ: " << gazeVector[2] << std::endl;
 	}
-}
-
-void Display::drawObjects() {
-       
-}
-
-void Display::updateScreenPoints() {
-    for(int i = 0; i < screenPoints.size(); i++) {
-        screenPoints.at(i) = worldToScreen(points.at(i));
-    }
-}
-
-void Display::worldToScreen(Matrix point) {
-    
 }
