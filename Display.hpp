@@ -32,25 +32,26 @@ class Display
         Matrix mcp{4, 4};
         
         void calculateMCP();
+        void makeCube(std::vector<double> center, double depth);
+        void updateVectors();
         std::vector<Matrix> points;
         std::vector<Matrix> screenPoints;
         void initPoints();
         void drawObjects();
         void updateScreenPoints();
+        void screenToCanvas();
+        double getX(Matrix m);
+        double getY(Matrix m);
         Matrix worldToScreen(Matrix point);
 		ALLEGRO_EVENT_QUEUE *eventQueue;
 		ALLEGRO_TIMER *timer;
 		ALLEGRO_DISPLAY *display;
-		std::vector<double> eyeVector;
-		std::vector<double> gazeVector;
 
-      	ALLEGRO_EVENT_QUEUE *eventQueue;
-       	ALLEGRO_TIMER *timer;
-        ALLEGRO_DISPLAY *display;
         std::vector<double> uVector;
         std::vector<double> vVector;
         std::vector<double> wVector;
         std::vector<double> eVector;
+        std::vector<double> tVector;
 
 };
 

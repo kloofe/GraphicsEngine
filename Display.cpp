@@ -2,6 +2,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <iostream>
 #include "Matrix.hpp"
+#include <cmath>
 
 #include "Display.hpp"
 
@@ -10,7 +11,8 @@ namespace
 
    	int FPS = 60; 
     std::vector<double> initUVector = {0, 0, -1};
-	std::vector<double> initVVector = {-1, 0, 0};
+    std::vector<double> initTVector = {0, 1, 0};
+	std::vector<double> initVVector = {1, 0, 0};
 	std::vector<double> initWVector = {0, 1, 0};
 	std::vector<double> initEVector = {0, 0, 200};
 	
@@ -23,7 +25,7 @@ namespace
 
 
 Display::Display()
-	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{uVector}, eVector{initialEVector}
+	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{initUVector}, vVector{initVVector},wVector{initWVector}, eVector{initEVector}, tVector{initTVector}
 {
     initPoints();
     for(int i = 0; i < points.size(); i++) {
@@ -43,16 +45,31 @@ Display::Display()
     scale.setValue(2, 3, (double) -(n + f)/(n - f));
     scale.setValue(3, 3, 1);
 
+    for(int i = 0; i < 4; i++) {
+        std::cout << scale.getValue(i, i) << std::endl;
+    }
+    std::cout << scale.getValue(2, 3) << std::endl;
+
     convert2D.setValue(0, 0, (double) width/2);
     convert2D.setValue(0, 2, (double) width/2);
     convert2D.setValue(1, 1, (double) height/2);
     convert2D.setValue(1, 2, (double) height/2);
-    convert2D.setValue(2, 3, 1);
+    convert2D.setValue(2, 2, 1);
     convert2D.setValue(3, 3, 1);
 
-    calculateMCP();
 
+    updateVectors();
+
+    calculateMCP();
     updateScreenPoints();
+    for(int i = 0; i < 3; i++) {
+        std::cout << vVector[i] << std::endl;
+    }
+    for(int i = 0; i < 3; i++) {
+        std::cout << wVector[i] << std::endl;
+    }
+
+
 	al_init();
 	al_init_primitives_addon();
 	eventQueue = al_create_event_queue();
@@ -93,6 +110,7 @@ void Display::run()
 			break;
 		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
 		{
+            updateScreenPoints();
 			if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
 				key[KEY_ESC] = true;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_W)
@@ -123,14 +141,13 @@ void Display::run()
 		}
     
 
-        al_clear_to_color(al_map_rgb(255, 255, 255));
-	    al_flip_display();
 
-        drawObjects();
 
 		if (redraw)
 		{
 			al_clear_to_color(al_map_rgb(255, 255, 255));
+
+            drawObjects();
 			if(key[KEY_W])
 				al_draw_line(0, 0, 640, 480, al_map_rgb(0, 0, 0), 1.0);
 			if(key[KEY_A])
@@ -146,18 +163,57 @@ void Display::run()
 }
 
 void Display::drawObjects() {
+    //draw cube
+    updateScreenPoints();
+    screenToCanvas();
+    std::cout << "first point" << getX(screenPoints[0]) << " " << getY(screenPoints[0]) << std::endl; 
+    for(int i = 0; i < 7; i++) {
+        al_draw_line(getX(screenPoints[i]), getY(screenPoints[i]),
+                     getX(screenPoints[i + 1]), getY(screenPoints[i + 1]), al_map_rgb(0, 0, 0), 1);
     
+    }
+    al_draw_line(getX(screenPoints[7]), getY(screenPoints[7]),
+                 getX(screenPoints[4]), getY(screenPoints[4]), al_map_rgb(0, 0, 0), 1);
+    al_draw_line(getX(screenPoints[1]), getY(screenPoints[1]),
+                 getX(screenPoints[6]), getY(screenPoints[6]), al_map_rgb(0, 0, 0), 1);
+    al_draw_line(getX(screenPoints[0]), getY(screenPoints[0]),
+                 getX(screenPoints[7]), getY(screenPoints[7]), al_map_rgb(0, 0, 0), 1);
+    al_draw_line(getX(screenPoints[0]), getY(screenPoints[0]),
+                 getX(screenPoints[3]), getY(screenPoints[3]), al_map_rgb(0, 0, 0), 1);
+
+
+
+
+}
+
+double Display::getX(Matrix m) {
+    return m.getValue(0, 0);
+}
+
+double Display::getY(Matrix m) {
+    return m.getValue(1, 0);
+}
+
+void Display::screenToCanvas() {
+    for(int i = 0; i < screenPoints.size(); i++) {
+        screenPoints.at(i).setValue(1, 0, height - screenPoints.at(i).getValue(1, 0));
+    }
 }
 
 void Display::initPoints() {
-    Matrix p1(-50, -50, 50, 1);
-    Matrix p2(-50, 50, 50, 1);
-    Matrix p3(50, 50, 50, 1);
-    Matrix p4(50, -50, 50, 1);
-    Matrix p5(50, -50, -50, 1);
-    Matrix p6(50, 50, -50, 1);
-    Matrix p7(-50, 50, -50, 1);
-    Matrix p8(-50, -50, -50, 1);
+    std::vector<double> center = {0, 0, 0};
+    makeCube(center, 100);
+}
+
+void Display::makeCube(std::vector<double> center, double depth) {
+    Matrix p1(center[0] - depth/2, center[1] - depth/2, center[2] + depth/2, 1);
+    Matrix p2(center[0] - depth/2, center[1] + depth/2, center[2] + depth/2, 1);
+    Matrix p3(center[0] + depth/2, center[1] + depth/2, center[2] + depth/2, 1);
+    Matrix p4(center[0] + depth/2, center[1] - depth/2, center[2] + depth/2, 1);
+    Matrix p5(center[0] + depth/2, center[1] - depth/2, center[2] - depth/2, 1);
+    Matrix p6(center[0] + depth/2, center[1] + depth/2, center[2] - depth/2, 1);
+    Matrix p7(center[0] - depth/2, center[1] + depth/2, center[2] - depth/2, 1);
+    Matrix p8(center[0] - depth/2, center[1] - depth/2, center[2] - depth/2, 1);
     points.push_back(p1);
     points.push_back(p2);
     points.push_back(p3);
@@ -168,7 +224,42 @@ void Display::initPoints() {
     points.push_back(p8);
 }
 
+void Display::updateVectors() {
+    Matrix uMatrix{uVector};
+    Matrix tMatrix{tVector};
+    Matrix vMatrix{vVector};
+    Matrix wMatrix{wVector};
+    vMatrix = uMatrix.crossProduct(tMatrix).normalize();
+    wMatrix = vMatrix.crossProduct(uMatrix);
+    std::cout << "AH:SLDKFJS:LDKFJ " << std::endl;
+    std::cout << wMatrix.getValue(0, 0) << " " << wMatrix.getValue(0, 1) << " " << wMatrix.getValue(0, 2) << std::endl;
+    vVector = wMatrix.toVector();
+    wVector = vMatrix.toVector();
+}
+
 void Display::calculateMCP() {
+    Matrix temp1{4, 4};
+    Matrix temp2{4, 4};
+    for(int i = 0; i < vVector.size(); i++) {
+        temp1.setValue(0, i, vVector[i]);
+    }
+    for(int i = 0; i < wVector.size(); i++) {
+        temp1.setValue(1, i, wVector[i]);
+    }
+    for(int i = 0; i < uVector.size(); i++) {
+        temp1.setValue(2, i, -uVector[i]);
+    }
+    temp1.setValue(3, 3, 1);
+
+    for(int i = 0; i < 4; i++) {
+        temp2.setValue(i, i, 1);
+        if(i != 3) {
+            temp2.setValue(i, 3, -eVector[i]);
+        }
+    }
+
+    mcp = temp1 * temp2;
+    
 }
 
 void Display::updateScreenPoints() {
@@ -180,6 +271,11 @@ void Display::updateScreenPoints() {
 }
 
 Matrix Display::worldToScreen(Matrix point) {
-    std::cout << "This not working huh" << std::endl;
-    return point * mcp * orthogonal * scale * convert2D;
+    point = mcp * point;
+    std::cout << point.getValue(0, 0) << " " << point.getValue(1, 0) << " " << point.getValue(2, 0) << std::endl;
+    point = orthogonal * point;
+    point = scale * point;
+    point = convert2D * point;
+    point = point * (1/point.getValue(2, 0));
+    return point;
 }
