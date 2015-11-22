@@ -21,6 +21,7 @@ class Display
         double l = -width/8;
         double t = height/8;
         double b = -height/8;
+        
 
 
         Matrix orthogonal{4, 4};
@@ -28,6 +29,7 @@ class Display
         Matrix convert2D{4, 4};
         Matrix mcp{4, 4};
         
+        void calculateMCP();
         std::vector<Matrix> points;
         std::vector<Matrix> screenPoints;
         void initPoints();

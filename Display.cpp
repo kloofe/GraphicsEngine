@@ -32,6 +32,21 @@ Display::Display()
     orthogonal.setValue(2, 3, -f * n);
     orthogonal.setValue(3, 2, 1);
 
+    scale.setValue(0, 0, (double) 2/(r - l));
+    scale.setValue(1, 1, (double) 2/(b - t));
+    scale.setValue(2, 2, (double) 2/(n - f));
+    scale.setValue(2, 3, (double) -(n + f)/(n - f));
+    scale.setValue(3, 3, 1);
+
+    convert2D.setValue(0, 0, (double) width/2);
+    convert2D.setValue(0, 2, (double) width/2);
+    convert2D.setValue(1, 1, (double) height/2);
+    convert2D.setValue(1, 2, (double) height/2);
+    convert2D.setValue(2, 3, 1);
+    convert2D.setValue(3, 3, 1);
+
+    calculateMCP();
+
     updateScreenPoints();
 	al_init();
 	al_init_primitives_addon();
@@ -148,6 +163,9 @@ void Display::initPoints() {
     points.push_back(p8);
 }
 
+void Display::calculateMCP() {
+}
+
 void Display::updateScreenPoints() {
     for(int i = 0; i < screenPoints.size(); i++) {
         Matrix temp = worldToScreen(points.at(i));
@@ -157,5 +175,6 @@ void Display::updateScreenPoints() {
 }
 
 Matrix Display::worldToScreen(Matrix point) {
+    std::cout << "This not working huh" << std::endl;
     return point * mcp * orthogonal * scale * convert2D;
 }
