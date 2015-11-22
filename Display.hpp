@@ -34,7 +34,7 @@ class Display
         void calculateMCP();
         void makeCube(std::vector<double> center, double depth);
         void updateVectors();
-        std::vector<Matrix> points;
+        std::vector<std::vector<Matrix>> shapes;
         std::vector<Matrix> screenPoints;
         void initPoints();
         void drawObjects();

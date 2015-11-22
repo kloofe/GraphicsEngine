@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Matrix.hpp"
 #include <cmath>
+#include "Cube.hpp"
 
 #include "Display.hpp"
 
@@ -180,10 +181,6 @@ void Display::drawObjects() {
                  getX(screenPoints[7]), getY(screenPoints[7]), al_map_rgb(0, 0, 0), 1);
     al_draw_line(getX(screenPoints[0]), getY(screenPoints[0]),
                  getX(screenPoints[3]), getY(screenPoints[3]), al_map_rgb(0, 0, 0), 1);
-
-
-
-
 }
 
 double Display::getX(Matrix m) {
@@ -202,26 +199,8 @@ void Display::screenToCanvas() {
 
 void Display::initPoints() {
     std::vector<double> center = {0, 0, 0};
-    makeCube(center, 100);
-}
-
-void Display::makeCube(std::vector<double> center, double depth) {
-    Matrix p1(center[0] - depth/2, center[1] - depth/2, center[2] + depth/2, 1);
-    Matrix p2(center[0] - depth/2, center[1] + depth/2, center[2] + depth/2, 1);
-    Matrix p3(center[0] + depth/2, center[1] + depth/2, center[2] + depth/2, 1);
-    Matrix p4(center[0] + depth/2, center[1] - depth/2, center[2] + depth/2, 1);
-    Matrix p5(center[0] + depth/2, center[1] - depth/2, center[2] - depth/2, 1);
-    Matrix p6(center[0] + depth/2, center[1] + depth/2, center[2] - depth/2, 1);
-    Matrix p7(center[0] - depth/2, center[1] + depth/2, center[2] - depth/2, 1);
-    Matrix p8(center[0] - depth/2, center[1] - depth/2, center[2] - depth/2, 1);
-    points.push_back(p1);
-    points.push_back(p2);
-    points.push_back(p3);
-    points.push_back(p4);
-    points.push_back(p5);
-    points.push_back(p6);
-    points.push_back(p7);
-    points.push_back(p8);
+    Cube c{center, depth};
+    shapes.push_back(c.getPoints());
 }
 
 void Display::updateVectors() {
@@ -263,8 +242,11 @@ void Display::calculateMCP() {
 }
 
 void Display::updateScreenPoints() {
-    for(int i = 0; i < screenPoints.size(); i++) {
-        Matrix temp = worldToScreen(points.at(i));
+    for(int i = 0; i < shapes.size(); i++) {
+        std::vector<Matrix> cubePoints = shapes.at(i);
+    }
+    for(int i = 0; i < cubePoints.size(); i++) {
+        Matrix temp = worldToScreen(cubePoints.at(i));
         screenPoints.at(i).setValue(0, 0, temp.getValue(0, 0));
         screenPoints.at(i).setValue(1, 0, temp.getValue(1, 0));
     }
