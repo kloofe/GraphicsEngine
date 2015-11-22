@@ -1,5 +1,6 @@
 #include <allegro5/allegro.h> 
 #include <allegro5/allegro_primitives.h>
+#include <cmath>
 #include <iostream>
 
 #include "Display.hpp"
@@ -7,7 +8,7 @@
 
 namespace
 {
-	int FPS = 60;
+	int FPS = 1;
 	int width = 640;
 	int height = 480;
 
@@ -26,9 +27,9 @@ namespace
 
 
 Display::Display()
-	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{uVector}, eVector{initialEVector}
+	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{initUVector}, vVector{initVVector}, wVector{initWVector}, eVector{initEVector}
 {
-    initPoints();
+    /*initPoints();
     for(int i = 0; i < points.size(); i++) {
         Matrix temp(2, 1);
         screenPoints.push_back(temp);
@@ -40,7 +41,7 @@ Display::Display()
     orthogonal.setValue(2, 3, -f * n);
     orthogonal.setValue(3, 2, 1);
 
-    updateScreenPoints();
+    updateScreenPoints();*/
 	al_init();
 	al_init_primitives_addon();
 	eventQueue = al_create_event_queue();
@@ -69,16 +70,15 @@ void Display::run()
 {
 	al_flip_display();
 	al_start_timer(timer);
+	int delta_x = 0;
+	int delta_y = 0;
 
 	while (!key[KEY_ESC])
 	{
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(eventQueue, &ev);
 
-		bool redraw = false;
-
-		if (ev.type == ALLEGRO_EVENT_TIMER)
-			redraw = true;
+		if (ev.type == ALLEGRO_EVENT_TIMER){}
 		else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			break;
 		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
@@ -93,8 +93,6 @@ void Display::run()
 				key[KEY_S] = true;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_D)
 				key[KEY_D] = true;
-			
-			redraw = true;
 		}
 		else if (ev.type == ALLEGRO_EVENT_KEY_UP)
 		{
@@ -108,52 +106,84 @@ void Display::run()
 				key[KEY_S] = false;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_D)
 				key[KEY_D] = false;
+		}
+ 	    else if(ev.type == ALLEGRO_EVENT_MOUSE_AXES)
+ 	    {
+ 	    	delta_x = ev.mouse.dx;
+ 	    	delta_y = -ev.mouse.dy;
 
-			redraw = true;
-		}
-		else if (ev.type == ALLEGRO_EVENT_MOUSE_AXES)
+ 	    	al_set_mouse_xy(display, 320, 240);
+     	}
+
+		al_clear_to_color(al_map_rgb(255, 255, 255));
+		if(key[KEY_W])
 		{
+			eVector[0] += (uVector[0] * 0.1);
+			eVector[1] += (uVector[1] * 0.1);
+			eVector[2] += (uVector[2] * 0.1);
+		}
+		if(key[KEY_A])
+		{				
+			eVector[0] += (vVector[0] * 0.1);
+			eVector[1] += (vVector[1] * 0.1);
+			eVector[2] += (vVector[2] * 0.1);
+		}
+		if(key[KEY_S])
+		{
+			eVector[0] -= (uVector[0] * 0.1);
+			eVector[1] -= (uVector[1] * 0.1);
+			eVector[2] -= (uVector[2] * 0.1);
+		}
+		if(key[KEY_D])
+		{
+			eVector[0] -= (vVector[0] * 0.1);
+			eVector[1] -= (vVector[1] * 0.1);
+			eVector[2] -= (vVector[2] * 0.1);
 		}
 
-		if (redraw)
-		{
-			al_clear_to_color(al_map_rgb(255, 255, 255));
-			if(key[KEY_W])
-			{
-				eyeVector[0] += (gazeVector[0] * 0.1);
-				eyeVector[1] += (gazeVector[1] * 0.1);
-				eyeVector[2] += (gazeVector[2] * 0.1);
-			}
-			if(key[KEY_A])
-			{				
-				eyeVector[0] -= (1 * 0.1);
-				eyeVector[1] -= (0 * 0.1);
-				eyeVector[2] -= (0 * 0.1);
-			}
-			if(key[KEY_S])
-			{
-				eyeVector[0] -= (gazeVector[0] * 0.1);
-				eyeVector[1] -= (gazeVector[1] * 0.1);
-				eyeVector[2] -= (gazeVector[2] * 0.1);
-			}
-			if(key[KEY_D])
-			{
-				eyeVector[0] += (1 * 0.1);
-				eyeVector[1] += (0 * 0.1);
-				eyeVector[2] += (0 * 0.1);
-			}
-			al_flip_display();
-		}
-		std::cout << "eyeVectorX: " << eyeVector[0] << std::endl;
-		std::cout << "eyeVectorY: " << eyeVector[1] << std::endl;
-		std::cout << "eyeVectorZ: " << eyeVector[2] << std::endl;
-		std::cout << "gazeVectorX: " << gazeVector[0] << std::endl;
-		std::cout << "gazeVectorY: " << gazeVector[1] << std::endl;
-		std::cout << "gazeVectorZ: " << gazeVector[2] << std::endl;
+		double theta = atan2(-uVector[2], uVector[0]);
+		double phi = acos(uVector[1]);
+
+		std::cout << "THETA: " << theta << std::endl;
+		std::cout << "PHI: " << phi << std::endl;
+
+		theta += (0.01 * delta_x);
+		phi -= (0.02 * delta_y);
+
+		std::cout << "THETA 2: " << theta << std::endl;
+		std::cout << "PHI 2: " << phi << std::endl;
+
+		if (theta > 6.2831853)
+			theta -= 6.2831853;
+		if (theta < 0)
+			theta += 6.2831853;
+
+		if (phi > 3.1415269)
+			phi = 3.1415269;
+		if (phi < 0)
+			phi = 0;
+
+		std::cout << "F THETA: " << theta << std::endl;
+		std::cout << "F PHI: " << phi << std::endl;
+
+		delta_x, delta_y = 0;
+
+		uVector[0] = cos(theta) * sin(phi);
+		uVector[1] = cos(phi);
+		uVector[2] = -sin(theta) * sin(phi);
+
+		al_flip_display();
+
+		std::cout << "eyeVectorX: " << eVector[0] << std::endl;
+		std::cout << "eyeVectorY: " << eVector[1] << std::endl;
+		std::cout << "eyeVectorZ: " << eVector[2] << std::endl;
+		std::cout << "gazeVectorX: " << uVector[0] << std::endl;
+		std::cout << "gazeVectorY: " << uVector[1] << std::endl;
+		std::cout << "gazeVectorZ: " << uVector[2] << std::endl;
 	}
 }
 
-void Display::drawObjects() {
+/*void Display::drawObjects() {
     
 }
 
@@ -186,4 +216,4 @@ void Display::updateScreenPoints() {
 
 Matrix Display::worldToScreen(Matrix point) {
     return point * mcp * orthogonal * scale * convert2D;
-}
+}*/
