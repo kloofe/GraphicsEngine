@@ -2,11 +2,8 @@
 #define DISPLAY_HPP
 
 #include <allegro5/allegro.h>
-<<<<<<< HEAD
 #include <vector>
 
-=======
->>>>>>> 4c2273447d49c1143eb6ac149e27fc3ebc365f7a
 #include "Matrix.hpp"
 
 class Display
@@ -46,6 +43,14 @@ class Display
 		ALLEGRO_DISPLAY *display;
 		std::vector<double> eyeVector;
 		std::vector<double> gazeVector;
+
+      	ALLEGRO_EVENT_QUEUE *eventQueue;
+       	ALLEGRO_TIMER *timer;
+        ALLEGRO_DISPLAY *display;
+        std::vector<double> uVector;
+        std::vector<double> vVector;
+        std::vector<double> wVector;
+        std::vector<double> eVector;
 
 };
 
