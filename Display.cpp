@@ -11,8 +11,10 @@ namespace
 	int width = 640;
 	int height = 480;
 
-	std::vector<double> initialEyeVector = {0, 0, 200};
-	std::vector<double> initialGazeVector = {0, 0, -1};
+	std::vector<double> initUVector = {0, 0, -1};
+	std::vector<double> initVVector = {-1, 0, 0};
+	std::vector<double> initWVector = {0, 1, 0};
+	std::vector<double> initEVector = {0, 0, 200};
 	
 	enum MYKEYS {
 	KEY_ESC, KEY_W, KEY_A, KEY_S, KEY_D
@@ -24,7 +26,7 @@ namespace
 
 
 Display::Display()
-	: eventQueue{NULL}, timer{NULL}, display{NULL}, eyeVector{initialEyeVector}, gazeVector{initialGazeVector}
+	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{uVector}, eVector{initialEVector}
 {
     initPoints();
     for(int i = 0; i < points.size(); i++) {
