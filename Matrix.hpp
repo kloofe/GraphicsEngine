@@ -9,6 +9,7 @@ class Matrix
 		Matrix();
         Matrix(unsigned int m, unsigned int n);
         Matrix(double x, double y, double z, double w);
+        Matrix(std::vector<double> v);
 		//Matrix(const Matrix& matr);
 		//~Matrix();
 		//Matrix operator=(const Matrix& matr);
@@ -24,6 +25,9 @@ class Matrix
         double getValue(unsigned int mIndex, unsigned int nIndex) const;
         unsigned int getRows() const;
         unsigned int getCols() const;
+        Matrix crossProduct(Matrix m);
+        Matrix normalize();
+        std::vector<double> toVector();
 
 	private:
 		std::vector<std::vector<double> > mtx;
