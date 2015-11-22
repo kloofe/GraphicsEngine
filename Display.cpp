@@ -7,43 +7,9 @@
 
 namespace
 {
-    std::vector<Matrix> points;
-    Matrix p1(-50, -50, 50);
-    Matrix p2(-50, 50, 50);
-    Matrix p3(50, 50, 50);
-    Matrix p4(50, -50, 50);
-    Matrix p5(50, -50, -50);
-    Matrix p6(50, 50, -50);
-    Matrix p7(-50, 50, -50);
-    Matrix p8(-50, -50, -50);
-    points.push_back(p1);
-    points.push_back(p2);
-    points.push_back(p3);
-    points.push_back(p4);
-    points.push_back(p5);
-    points.push_back(p6);
-    points.push_back(p7);
-    points.push_back(p8);
 
-    std::vector<Matrix> screenPoints = points;
-
-    Matrix camera(0, 0, 200);
-
-    Matrix orthogonal(4, 4);
-    Matrix scale(4, 4);
-    Matrix convert2D(4, 4);
-
-	int FPS = 60;
-	int width = 640;
-	int height = 480;
-    double n = 100;
-    double f = -200;
-    double r = width/8;
-    double l = -width/8;
-    double t = height/8;
-    double b = -height/8;
-
-	enum MYKEYS {
+   	int FPS = 60;
+    enum MYKEYS {
 	KEY_ESC, KEY_W, KEY_A, KEY_S, KEY_D
 	};
 
@@ -54,6 +20,18 @@ namespace
 Display::Display()
 	: eventQueue{NULL}, timer{NULL}, display{NULL}
 {
+    initPoints();
+    for(int i = 0; i < points.size(); i++) {
+        Matrix temp(2, 1);
+        screenPoints.push_back(temp);
+    }
+
+    orthogonal.setValue(0, 0, n);
+    orthogonal.setValue(1, 1, n);
+    orthogonal.setValue(2, 2, n + f);
+    orthogonal.setValue(2, 3, -f * n);
+    orthogonal.setValue(3, 2, 1);
+
     updateScreenPoints();
 	al_init();
 	al_init_primitives_addon();
@@ -148,15 +126,36 @@ void Display::run()
 }
 
 void Display::drawObjects() {
-       
+    
+}
+
+void Display::initPoints() {
+    Matrix p1(-50, -50, 50, 1);
+    Matrix p2(-50, 50, 50, 1);
+    Matrix p3(50, 50, 50, 1);
+    Matrix p4(50, -50, 50, 1);
+    Matrix p5(50, -50, -50, 1);
+    Matrix p6(50, 50, -50, 1);
+    Matrix p7(-50, 50, -50, 1);
+    Matrix p8(-50, -50, -50, 1);
+    points.push_back(p1);
+    points.push_back(p2);
+    points.push_back(p3);
+    points.push_back(p4);
+    points.push_back(p5);
+    points.push_back(p6);
+    points.push_back(p7);
+    points.push_back(p8);
 }
 
 void Display::updateScreenPoints() {
     for(int i = 0; i < screenPoints.size(); i++) {
-        screenPoints.at(i) = worldToScreen(points.at(i));
+        Matrix temp = worldToScreen(points.at(i));
+        screenPoints.at(i).setValue(0, 0, temp.getValue(0, 0));
+        screenPoints.at(i).setValue(1, 0, temp.getValue(1, 0));
     }
 }
 
-void Display::worldToScreen(Matrix point) {
-    
+Matrix Display::worldToScreen(Matrix point) {
+    return point * mcp * orthogonal * scale * convert2D;
 }
