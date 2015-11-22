@@ -35,7 +35,7 @@ class Display
         void makeCube(std::vector<double> center, double depth);
         void updateVectors();
         std::vector<std::vector<Matrix>> shapes;
-        std::vector<Matrix> screenPoints;
+        std::vector<std::vector<Matrix>> screenPoints;
         void initPoints();
         void drawObjects();
         void updateScreenPoints();

@@ -1,5 +1,5 @@
 #ifndef CUBE_HPP
-#define MATRIX_HPP
+#define CUBE_HPP
 
 #include "Matrix.hpp"
 #include <vector>
@@ -7,14 +7,15 @@
 class Cube {
 public: 
     Cube();
-    Cube(std::vector <double> c, double d);
+    Cube(std::vector<double> c, double d);
 
     std::vector<Matrix> getPoints() const;
 private:
     std::vector<Matrix> points;
+    double depth;
     std::vector<double> center;
     void createPoints();
-}
+};
 
 
 #endif

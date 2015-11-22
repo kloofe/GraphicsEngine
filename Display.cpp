@@ -1,5 +1,6 @@
 #include <allegro5/allegro.h> 
 #include <allegro5/allegro_primitives.h>
+#include <cmath>
 #include <iostream>
 #include "Matrix.hpp"
 #include <cmath>
@@ -9,8 +10,7 @@
 
 namespace
 {
-
-   	int FPS = 60; 
+   	int FPS = 24; 
     std::vector<double> initUVector = {0, 0, -1};
     std::vector<double> initTVector = {0, 1, 0};
 	std::vector<double> initVVector = {1, 0, 0};
@@ -26,13 +26,9 @@ namespace
 
 
 Display::Display()
-	: eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{initUVector}, vVector{initVVector},wVector{initWVector}, eVector{initEVector}, tVector{initTVector}
+    : eventQueue{NULL}, timer{NULL}, display{NULL}, uVector{initUVector}, vVector{initVVector},wVector{initWVector}, eVector{initEVector}, tVector{initTVector}
 {
     initPoints();
-    for(int i = 0; i < points.size(); i++) {
-        Matrix temp(2, 1);
-        screenPoints.push_back(temp);
-    }
 
     orthogonal.setValue(0, 0, n);
     orthogonal.setValue(1, 1, n);
@@ -40,6 +36,7 @@ Display::Display()
     orthogonal.setValue(2, 3, -f * n);
     orthogonal.setValue(3, 2, 1);
 
+    updateScreenPoints();
     scale.setValue(0, 0, (double) 2/(r - l));
     scale.setValue(1, 1, (double) 2/(b - t));
     scale.setValue(2, 2, (double) 2/(n - f));
@@ -70,6 +67,8 @@ Display::Display()
         std::cout << wVector[i] << std::endl;
     }
 
+    calculateMCP();
+    updateScreenPoints();
 
 	al_init();
 	al_init_primitives_addon();
@@ -80,10 +79,12 @@ Display::Display()
 	al_clear_to_color(al_map_rgb(255, 255, 255));
 
 	al_install_keyboard();
+	al_install_mouse();
 
 	al_register_event_source(eventQueue, al_get_display_event_source(display));
 	al_register_event_source(eventQueue, al_get_timer_event_source(timer));
 	al_register_event_source(eventQueue, al_get_keyboard_event_source());
+	al_register_event_source(eventQueue, al_get_mouse_event_source());
 }
 
 Display::~Display()
@@ -97,21 +98,19 @@ void Display::run()
 {
 	al_flip_display();
 	al_start_timer(timer);
+	int delta_x = 0;
+	int delta_y = 0;
 
 	while (!key[KEY_ESC])
 	{
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(eventQueue, &ev);
 
-		bool redraw = false;
-
-		if (ev.type == ALLEGRO_EVENT_TIMER)
-			redraw = false;
+		if (ev.type == ALLEGRO_EVENT_TIMER){}
 		else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			break;
 		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
 		{
-            updateScreenPoints();
 			if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
 				key[KEY_ESC] = true;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_W)
@@ -122,8 +121,6 @@ void Display::run()
 				key[KEY_S] = true;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_D)
 				key[KEY_D] = true;
-			
-			redraw = true;
 		}
 		else if (ev.type == ALLEGRO_EVENT_KEY_UP)
 		{
@@ -137,50 +134,102 @@ void Display::run()
 				key[KEY_S] = false;
 			if (ev.keyboard.keycode ==  ALLEGRO_KEY_D)
 				key[KEY_D] = false;
-
-			redraw = true;
 		}
-    
+ 	    else if(ev.type == ALLEGRO_EVENT_MOUSE_AXES)
+ 	    {
+ 	    	al_set_mouse_xy(display, 320, 240);
+ 	    	if(abs(ev.mouse.dx) < 20 && abs(ev.mouse.dy) < 20) {
+ 	    	    delta_x = ev.mouse.dx;
+ 	    	    delta_y = -ev.mouse.dy;
+ 	    	}
+
+ 	    	double theta = atan2(-uVector[2], uVector[0]);
+            double phi = acos(uVector[1]);
+
+            std::cout << "THETA: " << theta << std::endl;
+            std::cout << "PHI: " << phi << std::endl;
+
+            theta += (0.005 * delta_y);
+            phi -= (0.01 * delta_x);
+
+            std::cout << "PHI 2: " << phi << std::endl;
+
+            if (theta > 6.2831853)
+                theta -= 6.2831853;
+            if (theta <= 0)
+                theta += 6.2831853;
+
+            if (phi > 3.1415269)
+                phi = 3.1415269;
+            if (phi < 0)
+                phi = 0;
 
 
+            std::cout << "THETA 2: " << theta << std::endl;
+            delta_x, delta_y = 0;
 
-		if (redraw)
+            uVector[0] = cos(theta) * sin(phi);
+            uVector[1] = cos(phi);
+            uVector[2] = -sin(theta) * sin(phi);
+            std::cout << "VECTORSSSS " << uVector[0] << " " << uVector[1] << " " << uVector[2] << std::endl;
+ 	    	
+     	}
+
+		if(key[KEY_W])
 		{
-			al_clear_to_color(al_map_rgb(255, 255, 255));
-
-            drawObjects();
-			if(key[KEY_W])
-				al_draw_line(0, 0, 640, 480, al_map_rgb(0, 0, 0), 1.0);
-			if(key[KEY_A])
-				al_draw_line(0, 480, 640, 0, al_map_rgb(0, 0, 0), 1.0);
-			if(key[KEY_S])
-				al_draw_line(0, 240, 640, 240, al_map_rgb(0, 0, 0), 1.0);
-			if(key[KEY_D])
-				al_draw_line(320, 0, 320, 480, al_map_rgb(0, 0, 0), 1.0);
-			al_flip_display();
+			eVector[0] += (uVector[0] * 0.4);
+			eVector[1] += (uVector[1] * 0.4);
+			eVector[2] += (uVector[2] * 0.4);
+		}
+		if(key[KEY_A])
+		{				
+			eVector[0] -= (vVector[0] * 0.4);
+			eVector[1] -= (vVector[1] * 0.4);
+			eVector[2] -= (vVector[2] * 0.4);
+		}
+		if(key[KEY_S])
+		{
+			eVector[0] -= (uVector[0] * 0.4);
+			eVector[1] -= (uVector[1] * 0.4);
+			eVector[2] -= (uVector[2] * 0.4);
+		}
+		if(key[KEY_D])
+		{
+			eVector[0] += (vVector[0] * 0.4);
+			eVector[1] += (vVector[1] * 0.4);
+			eVector[2] += (vVector[2] * 0.4);
 		}
 
-	}
+		
+
+		al_clear_to_color(al_map_rgb(255, 255, 255));
+		calculateMCP();
+		drawObjects();
+		al_flip_display();
+
+    }
 }
 
 void Display::drawObjects() {
     //draw cube
     updateScreenPoints();
     screenToCanvas();
-    std::cout << "first point" << getX(screenPoints[0]) << " " << getY(screenPoints[0]) << std::endl; 
-    for(int i = 0; i < 7; i++) {
-        al_draw_line(getX(screenPoints[i]), getY(screenPoints[i]),
-                     getX(screenPoints[i + 1]), getY(screenPoints[i + 1]), al_map_rgb(0, 0, 0), 1);
-    
+    for(int j = 0; j < screenPoints.size(); j++) {
+        for(int i = 0; i < 7; i++) {
+            al_draw_line(getX(screenPoints[j][i]), getY(screenPoints[j][i]),
+                         getX(screenPoints[j][i + 1]), getY(screenPoints[j][i + 1]), al_map_rgb(0, 0, 0), 1);
+        }
+        al_draw_line(getX(screenPoints[j][7]), getY(screenPoints[j][7]),
+                     getX(screenPoints[j][4]), getY(screenPoints[j][4]), al_map_rgb(0, 0, 0), 1);
+        al_draw_line(getX(screenPoints[j][1]), getY(screenPoints[j][1]),
+                     getX(screenPoints[j][6]), getY(screenPoints[j][6]), al_map_rgb(0, 0, 0), 1);
+        al_draw_line(getX(screenPoints[j][0]), getY(screenPoints[j][0]),
+                     getX(screenPoints[j][7]), getY(screenPoints[j][7]), al_map_rgb(0, 0, 0), 1);
+        al_draw_line(getX(screenPoints[j][0]), getY(screenPoints[j][0]),
+                     getX(screenPoints[j][3]), getY(screenPoints[j][3]), al_map_rgb(0, 0, 0), 1);
+        al_draw_line(getX(screenPoints[j][2]), getY(screenPoints[j][2]),
+                     getX(screenPoints[j][5]), getY(screenPoints[j][5]), al_map_rgb(0, 0, 0), 1);
     }
-    al_draw_line(getX(screenPoints[7]), getY(screenPoints[7]),
-                 getX(screenPoints[4]), getY(screenPoints[4]), al_map_rgb(0, 0, 0), 1);
-    al_draw_line(getX(screenPoints[1]), getY(screenPoints[1]),
-                 getX(screenPoints[6]), getY(screenPoints[6]), al_map_rgb(0, 0, 0), 1);
-    al_draw_line(getX(screenPoints[0]), getY(screenPoints[0]),
-                 getX(screenPoints[7]), getY(screenPoints[7]), al_map_rgb(0, 0, 0), 1);
-    al_draw_line(getX(screenPoints[0]), getY(screenPoints[0]),
-                 getX(screenPoints[3]), getY(screenPoints[3]), al_map_rgb(0, 0, 0), 1);
 }
 
 double Display::getX(Matrix m) {
@@ -193,13 +242,15 @@ double Display::getY(Matrix m) {
 
 void Display::screenToCanvas() {
     for(int i = 0; i < screenPoints.size(); i++) {
-        screenPoints.at(i).setValue(1, 0, height - screenPoints.at(i).getValue(1, 0));
+        for(int j = 0; j < screenPoints.at(i).size(); j++) {
+            screenPoints.at(i).at(j).setValue(1, 0, height - screenPoints.at(i).at(j).getValue(1, 0));
+        }
     }
 }
 
 void Display::initPoints() {
     std::vector<double> center = {0, 0, 0};
-    Cube c{center, depth};
+    Cube c{center, 100};
     shapes.push_back(c.getPoints());
 }
 
@@ -210,13 +261,12 @@ void Display::updateVectors() {
     Matrix wMatrix{wVector};
     vMatrix = uMatrix.crossProduct(tMatrix).normalize();
     wMatrix = vMatrix.crossProduct(uMatrix);
-    std::cout << "AH:SLDKFJS:LDKFJ " << std::endl;
-    std::cout << wMatrix.getValue(0, 0) << " " << wMatrix.getValue(0, 1) << " " << wMatrix.getValue(0, 2) << std::endl;
     vVector = wMatrix.toVector();
     wVector = vMatrix.toVector();
 }
 
 void Display::calculateMCP() {
+	updateVectors();
     Matrix temp1{4, 4};
     Matrix temp2{4, 4};
     for(int i = 0; i < vVector.size(); i++) {
@@ -242,19 +292,23 @@ void Display::calculateMCP() {
 }
 
 void Display::updateScreenPoints() {
+    screenPoints.clear();
     for(int i = 0; i < shapes.size(); i++) {
         std::vector<Matrix> cubePoints = shapes.at(i);
-    }
-    for(int i = 0; i < cubePoints.size(); i++) {
-        Matrix temp = worldToScreen(cubePoints.at(i));
-        screenPoints.at(i).setValue(0, 0, temp.getValue(0, 0));
-        screenPoints.at(i).setValue(1, 0, temp.getValue(1, 0));
+        std::vector<Matrix> cubeScreenPoints;
+        for(int j = 0; j < cubePoints.size(); j++) {
+            Matrix temp = worldToScreen(cubePoints.at(j));
+            Matrix temp2{2, 1};
+            temp2.setValue(0, 0, temp.getValue(0, 0));
+            temp2.setValue(1, 0, temp.getValue(1, 0));
+            cubeScreenPoints.push_back(temp2);
+        }
+        screenPoints.push_back(cubeScreenPoints);
     }
 }
 
 Matrix Display::worldToScreen(Matrix point) {
     point = mcp * point;
-    std::cout << point.getValue(0, 0) << " " << point.getValue(1, 0) << " " << point.getValue(2, 0) << std::endl;
     point = orthogonal * point;
     point = scale * point;
     point = convert2D * point;

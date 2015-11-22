@@ -142,17 +142,11 @@ Matrix Matrix::crossProduct(Matrix m) {
     for(int i = 0; i < colNum; i++) {
         temp.setValue(0, i, getValue(0, i));
         temp.setValue(1, i, m.getValue(0, i));
-        std::cout << "ahhh " << temp.getValue(0, i) << " " << temp.getValue(1, i) << std::endl;
     }
     Matrix result{1, 3};
     result.setValue(0, 0, temp.getValue(0, 1) * temp.getValue(1, 2) - temp.getValue(0, 2) * temp.getValue(1, 1));
     result.setValue(0, 1, -(temp.getValue(0, 0) * temp.getValue(1, 2) - temp.getValue(0, 2) * temp.getValue(1, 0)));
     result.setValue(0, 2, temp.getValue(0, 0) * temp.getValue(1, 1) - temp.getValue(0, 1) * temp.getValue(1, 0));
-    std::cout << "CROSS PRODUCT ";
-    for(int i = 0; i < 3; i++) {
-        std::cout << result.getValue(0, i) << " ";
-    }
-    std::cout << std::endl;
     return result;
 
 }
