@@ -26,6 +26,19 @@ namespace
 Display::Display()
 	: eventQueue{NULL}, timer{NULL}, display{NULL}, eyeVector{initialEyeVector}, gazeVector{initialGazeVector}
 {
+    initPoints();
+    for(int i = 0; i < points.size(); i++) {
+        Matrix temp(2, 1);
+        screenPoints.push_back(temp);
+    }
+
+    orthogonal.setValue(0, 0, n);
+    orthogonal.setValue(1, 1, n);
+    orthogonal.setValue(2, 2, n + f);
+    orthogonal.setValue(2, 3, -f * n);
+    orthogonal.setValue(3, 2, 1);
+
+    updateScreenPoints();
 	al_init();
 	al_init_primitives_addon();
 	eventQueue = al_create_event_queue();
@@ -136,4 +149,39 @@ void Display::run()
 		std::cout << "gazeVectorY: " << gazeVector[1] << std::endl;
 		std::cout << "gazeVectorZ: " << gazeVector[2] << std::endl;
 	}
+}
+
+void Display::drawObjects() {
+    
+}
+
+void Display::initPoints() {
+    Matrix p1(-50, -50, 50, 1);
+    Matrix p2(-50, 50, 50, 1);
+    Matrix p3(50, 50, 50, 1);
+    Matrix p4(50, -50, 50, 1);
+    Matrix p5(50, -50, -50, 1);
+    Matrix p6(50, 50, -50, 1);
+    Matrix p7(-50, 50, -50, 1);
+    Matrix p8(-50, -50, -50, 1);
+    points.push_back(p1);
+    points.push_back(p2);
+    points.push_back(p3);
+    points.push_back(p4);
+    points.push_back(p5);
+    points.push_back(p6);
+    points.push_back(p7);
+    points.push_back(p8);
+}
+
+void Display::updateScreenPoints() {
+    for(int i = 0; i < screenPoints.size(); i++) {
+        Matrix temp = worldToScreen(points.at(i));
+        screenPoints.at(i).setValue(0, 0, temp.getValue(0, 0));
+        screenPoints.at(i).setValue(1, 0, temp.getValue(1, 0));
+    }
+}
+
+Matrix Display::worldToScreen(Matrix point) {
+    return point * mcp * orthogonal * scale * convert2D;
 }

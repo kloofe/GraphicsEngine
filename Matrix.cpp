@@ -14,25 +14,18 @@ Matrix::Matrix(unsigned int m, unsigned int n)
     initMatrix();
 }
 
-Matrix::Matrix(const std::vector<double>& vect) 
-    : rowNum{1}, colNum{(unsigned int) vect.size()} {
-    std::vector<double> row;
-    for(int i = 0; i < colNum; i++) {
-        row.push_back(vect.at(i));
+Matrix::Matrix(double x, double y, double z, double w) 
+    : rowNum{4}, colNum{1} {
+    std::vector<double> temp;
+    temp.push_back(x);
+    temp.push_back(y);
+    temp.push_back(z);
+    temp.push_back(w);
+    for(unsigned int i = 0; i < rowNum; i++) {
+        std::vector<double> row;
+        row.push_back(temp.at(i));
+        mtx.push_back(row);
     }
-    mtx.push_back(row);
-}
-
-Matrix::Matrix(double x, double y, double z) 
-    : rowNum{1}, colNum{3} {
-    std::vector<double> row;
-    row.push_back(x);
-    row.push_back(y);
-    row.push_back(z);
-    mtx.push_back(row);
-}
-void Matrix::setValue(unsigned int m, unsigned int n, double value) {
-    mtx.at(m).at(n) = value;
 }
 
 Matrix Matrix::operator*(const double& scal) {
@@ -123,6 +116,10 @@ double Matrix::getValue(unsigned int mIndex, unsigned int nIndex) const {
     return mtx.at(mIndex).at(nIndex);
 }
 
+void Matrix::setValue(unsigned int m, unsigned int n, double value) {
+    mtx.at(m).at(n) = value;
+}
+
 void Matrix::initMatrix() {
     for(unsigned int i = 0; i < rowNum; i++) {
         std::vector<double> row;
@@ -133,11 +130,3 @@ void Matrix::initMatrix() {
     }
 }
 
-/*void Matrix::rotateXY(double degrees) {
-}
-
-void Matrix::rotateXZ(double degrees) {
-}
-
-void Matrixx::rotateYZ(double degrees) {
-}*/
